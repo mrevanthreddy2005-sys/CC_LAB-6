@@ -3,15 +3,20 @@ pipeline {
 
     stages {
 
+        stage('Clean Workspace') {
+            steps {
+                deleteDir()
+            }
+        }
+
         stage('Checkout Code') {
             steps {
-                echo 'Checking out source code...'
+                checkout scm
             }
         }
 
         stage('Build Backend Image') {
             steps {
-                echo 'Building backend Docker image...'
                 sh '''
                     docker rm -f backend1 backend2 || true
                     docker rmi -f backend-app || true
@@ -22,7 +27,6 @@ pipeline {
 
         stage('Deploy Backend Containers') {
             steps {
-                echo 'Deploying backend containers...'
                 sh '''
                     docker run -d --name backend1 backend-app
                     docker run -d --name backend2 backend-app
@@ -32,7 +36,6 @@ pipeline {
 
         stage('Deploy NGINX Load Balancer') {
             steps {
-                echo 'Deploying NGINX load balancer...'
                 sh '''
                     docker rm -f nginx-lb || true
                     docker run -d --name nginx-lb -p 80:80 nginx
@@ -41,15 +44,6 @@ pipeline {
                     docker exec nginx-lb nginx -s reload
                 '''
             }
-        }
-    }
-
-    post {
-        success {
-            echo 'Pipeline executed successfully!'
-        }
-        failure {
-            echo 'Pipeline failed. Check console logs.'
         }
     }
 }
